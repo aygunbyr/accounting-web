@@ -1,0 +1,82 @@
+<div class="p-3">
+  <div class="flex gap-2 items-center mb-3">
+    <p-select [options]="directionOptions" optionLabel="label" optionValue="value" [(ngModel)]="direction"
+      placeholder="Yön" class="w-12rem">
+    </p-select>
+    <p-select [options]="['','TRY','USD','EUR']" [(ngModel)]="currency" placeholder="Currency"
+      class="w-10rem"></p-select>
+    <p-datepicker [(ngModel)]="dateFrom" dateFormat="yy-mm-dd" placeholder="From"></p-datepicker>
+    <p-datepicker [(ngModel)]="dateTo" dateFormat="yy-mm-dd" placeholder="To"></p-datepicker>
+    <button pButton label="Filter" (click)="load()"></button>
+    <span class="flex-1"></span>
+    <button pButton icon="pi pi-plus" label="New Payment" (click)="showCreate=true"></button>
+  </div>
+
+  <p-table [value]="rows()" [lazy]="true" [loading]="loading()" [paginator]="true" [rows]="pageSize"
+    [totalRecords]="total()" (onPage)="onPage($event)" (onSort)="onSort($event)" [sortField]="currentSortField"
+    [sortOrder]="currentSortOrder" [sortMode]="'single'">
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="dateUtc">Tarih <p-sortIcon field="dateUtc" /></th>
+        <th>Yön</th>
+        <th pSortableColumn="amount">Tutar <p-sortIcon field="amount" /></th>
+        <th>Para Birimi</th>
+        <th>Hesap</th>
+        <th>Cari</th>
+        <th style="width: 120px;">İşlemler</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-r>
+      <tr>
+        <td>{{ r.dateUtc | date:'yyyy-MM-dd HH:mm' }}</td>
+        <td>{{ directionText(r.direction) }}</td>
+        <td>{{ r.amount }}</td>
+        <td>{{ r.currency }}</td>
+        <td>{{ r.accountId }}</td>
+        <td>{{ r.contactId || '-' }}</td>
+        <td class="flex gap-2">
+          <button pButton icon="pi pi-trash" class="p-button-danger p-button-sm"
+            (click)="confirmSoftDelete(r)"></button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-r>
+      <tr>
+        <td>{{ r.dateUtc | date:'yyyy-MM-dd HH:mm' }}</td>
+        <td>{{ directionText(r.direction) }}</td>
+        <td>{{ r.amount }}</td>
+        <td>{{ r.currency }}</td>
+        <td>{{ r.accountId }}</td>
+        <td>{{ r.contactId || '-' }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog header="Create Payment" [(visible)]="showCreate" [modal]="true" [style]="{width:'420px'}">
+  <div class="flex flex-column gap-3">
+    <div class="flex gap-2 items-center">
+      <span class="w-6rem">Amount</span>
+      <input pInputText [(ngModel)]="createModel.amount" placeholder="e.g. 1250.00" class="w-12rem">
+    </div>
+    <div class="flex gap-2 items-center">
+      <span class="w-6rem">Currency</span>
+      <p-select [options]="['TRY','USD','EUR']" [(ngModel)]="createModel.currency" class="w-10rem"></p-select>
+    </div>
+    <div class="flex gap-2 items-center">
+      <span class="w-6rem">Direction</span>
+      <p-select [options]="['In','Out']" [(ngModel)]="createModel.direction" class="w-10rem"></p-select>
+    </div>
+    <div class="flex gap-2 items-center">
+      <span class="w-6rem">Date</span>
+      <p-datepicker [(ngModel)]="createModelDate" [showTime]="true" [hourFormat]="'24'"></p-datepicker>
+    </div>
+    <div class="flex gap-2">
+      <button pButton label="Create" (click)="create()"></button>
+      <span class="flex-1"></span>
+      <button pButton label="Cancel" class="p-button-secondary" (click)="showCreate=false"></button>
+    </div>
+  </div>
+</p-dialog>
