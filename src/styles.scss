@@ -21,3 +21,5 @@ body {
     font-family: var(--p-font-family);
     margin: 0;
 }
+
+.p-overlay, .p-overlay-mask, .p-connected-overlay { background: transparent !important; animation: none !important; transition: none !important; }

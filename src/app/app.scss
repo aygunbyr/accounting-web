@@ -1,0 +1,54 @@
+:host { display: block; }
+
+/* Grid yerleşim */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+/* Sidebar (masaüstü) */
+.sidebar {
+  display: none;              /* mobile'de gizli */
+  flex-direction: column;
+  gap: 10px;
+  width: 260px;
+  padding: 16px;
+  border-right: 1px solid var(--p-content-border-color);
+  background: var(--p-surface-50);
+}
+
+/* Responsive yardımcıları (Tailwind yok, kendi sınıflarımız) */
+.lg-flex { display: none; }
+.lg-hide { display: inline-flex; }
+@media (min-width: 1024px) {
+  .lg-flex { display: flex; }   /* masaüstünde sidebar görünür */
+  .lg-hide { display: none; }   /* hamburger gizlenir */
+}
+
+/* Drawer içi */
+.drawer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+/* Marka başlık */
+.brand {
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: .2px;
+  margin-bottom: 12px;
+  color: var(--p-primary-color);
+}
+
+/* Menü butonları: dikey, tam genişlik, mavi dolu görünüm */
+.menu-btn {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* İçerik alanı */
+.content { padding: 16px; }

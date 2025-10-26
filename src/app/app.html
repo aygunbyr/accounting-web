@@ -1,5 +1,43 @@
-<p-menubar [model]="menu"></p-menubar>
+<!-- Mobil: hamburger -->
+<button
+  pButton
+  type="button"
+  label="Menü"
+  icon="pi pi-bars"
+  class="m-2 lg-hide"
+  (click)="sidebarOpen.set(true)">
+</button>
 
-<p-toast position="top-right" />
+<!-- Mobil: Drawer -->
+<p-drawer
+  [visible]="sidebarOpen()"
+  (onHide)="sidebarOpen.set(false)"
+  position="left"
+  [modal]="true"
+  [dismissible]="true"
+  [showCloseIcon]="true"
+  [style]="{ width: '18rem' }"
+  animate.enter="fade-in"
+  animate.leave="fade-out">
 
-<router-outlet></router-outlet>
+  <div class="drawer-inner">
+    <h2 class="brand">Accounting</h2>
+    <button pButton label="Ödemeler" icon="pi pi-wallet" class="p-button-text menu-btn" [routerLink]="'/payments'"></button>
+    <button pButton label="Faturalar" icon="pi pi-file" class="p-button-text menu-btn" [routerLink]="'/invoices'"></button>
+  </div>
+</p-drawer>
+
+<!-- Masaüstü düzen -->
+<div class="layout">
+  <aside class="sidebar lg-flex">
+    <h2 class="brand">Accounting</h2>
+
+    <button pButton label="Ödemeler" icon="pi pi-wallet" class="p-button-text menu-btn" [routerLink]="'/payments'"></button>
+    <button pButton label="Faturalar" icon="pi pi-file" class="p-button-text menu-btn" [routerLink]="'/invoices'"></button>
+  </aside>
+
+  <main class="content">
+    <p-toast position="top-right"></p-toast>
+    <router-outlet></router-outlet>
+  </main>
+</div>
