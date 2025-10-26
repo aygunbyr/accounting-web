@@ -4,10 +4,6 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { provideAnimations } from '@angular/platform-browser/animations';
 import localeTr from '@angular/common/locales/tr';
 import { registerLocaleData } from '@angular/common';
-import { providePrimeNG } from 'primeng/config';
-import { tr } from 'primelocale/tr.json';
-import Aura from '@primeng/themes/aura';
-import { MessageService } from 'primeng/api';
 
 import { routes } from './app.routes';
 
@@ -25,13 +21,5 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([httpProblemInterceptor])),
     provideAnimations(),
     { provide: LOCALE_ID, useValue: 'tr' },
-    providePrimeNG({
-      theme: {
-        preset: Aura
-      },
-      ripple: true,
-      translation: tr
-    }),
-    MessageService
   ]
 };
