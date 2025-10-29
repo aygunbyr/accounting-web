@@ -102,7 +102,7 @@ export class ListGridComponent<T> implements OnInit {
     this.load();
   }
 
-  reload() { this.load(); }
+  public reload() { this.load(); }
   nextPage() { if (this.hasMore()) { this.pageNumber.update(p => p + 1); this.load(); } }
   prevPage() { if (this.pageNumber() > 1) { this.pageNumber.update(p => p - 1); this.load(); } }
 
