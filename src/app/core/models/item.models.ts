@@ -1,5 +1,6 @@
 export interface ItemListItem {
   id: number;
+  code: string;
   name: string;
   unit: string;
   vatRate: number;

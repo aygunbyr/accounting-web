@@ -59,10 +59,11 @@ import { MatButtonModule } from '@angular/material/button';
   `]
 })
 export class ItemsPageComponent {
-    // BE whitelist: name, vatrate, price
-    sortWhitelist = ['name', 'vatrate', 'price'];
+    // BE whitelist: code, name, vatrate, price
+    sortWhitelist = ['code', 'name', 'vatrate', 'price'];
 
     colDefs: ColDef<ItemListItem>[] = [
+        { field: 'code', headerName: 'Kod', sortable: true, minWidth: 120 },
         { field: 'name', headerName: 'Ad', sortable: true, minWidth: 180 },
         { field: 'unit', headerName: 'Birim', sortable: false, maxWidth: 120 },
         { field: 'vatRate', headerName: 'KDV (%)', sortable: true, maxWidth: 120, type: 'rightAligned' },

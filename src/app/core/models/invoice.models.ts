@@ -1,5 +1,8 @@
 export interface InvoiceListItem {
   id: number;
+  contactCode: string;
+  contactName: string;
+  type: string;
   dateUtc: string;
   currency: string;
   totalNet: string;
@@ -8,6 +11,7 @@ export interface InvoiceListItem {
   contactId?: number | null;
   createdAtUtc: string;
 }
+
 export interface ListInvoicesQuery {
   pageNumber?: number;
   pageSize?: number;

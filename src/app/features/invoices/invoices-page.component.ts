@@ -22,8 +22,11 @@ export class InvoicesPageComponent {
   sortWhitelist = ['dateUtc','totalNet','totalVat','totalGross'];
 
   colDefs: ColDef<InvoiceListItem>[] = [
+    { field: 'contactId', headerName: 'Cari #', sortable: false, minWidth: 140 },
+    { field: 'contactCode', headerName: 'Cari Kodu', sortable: false, minWidth: 120 },
+    { field: 'contactName', headerName: 'Cari Adı',  sortable: false, minWidth: 180 },
+    { field: 'type', headerName: 'Tür', sortable: false, maxWidth: 120 }, // Sales/Purchase
     { field: 'dateUtc', headerName: 'Tarih (UTC)', sortable: true, valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString() : '' },
-    { field: 'contactId', headerName: 'Cari (Id)', sortable: false, minWidth: 140 },
     { field: 'totalNet', headerName: 'Net', sortable: true, type: 'rightAligned', minWidth: 120 },
     { field: 'totalVat', headerName: 'KDV', sortable: true, type: 'rightAligned', minWidth: 120 },
     { field: 'totalGross', headerName: 'Genel Toplam', sortable: true, type: 'rightAligned', minWidth: 140 },
