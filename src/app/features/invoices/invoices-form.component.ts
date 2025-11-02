@@ -13,6 +13,7 @@ import { AgGridAngular } from 'ag-grid-angular';
 import type {
   ColDef, GetRowIdParams, ValueParserParams, CellClickedEvent
 } from 'ag-grid-community';
+import { LineActionsCell } from './line-actions.cell';
 
 export type InvoiceMode = 'insert' | 'update' | 'view';
 export type InvoiceTypeStr = 'Sales'|'Purchase'|'SalesReturn'|'PurchaseReturn';
@@ -218,6 +219,11 @@ export class InvoiceFormComponent {
 
   getRowId = (p: GetRowIdParams<LineRow>) => String(p.data?.id && p.data.id > 0 ? p.data.id : p.data?._cid);
 
+  deleteLine = (row: LineRow) => {
+    const { id, _cid } = row;
+    this.rowData = this.rowData.filter(r => (r.id && r.id > 0) ? r.id !== id : r._cid !== _cid);
+  };
+
   colDefs: ColDef<LineRow>[] = [
     { field: 'itemId', headerName: 'Ürün (ID)', editable: p => !this.readonly(), valueParser: this.numberParser, minWidth: 120 },
     { field: 'qty', headerName: 'Miktar', editable: p => !this.readonly(), valueParser: this.numberParser, minWidth: 110, type: 'rightAligned' },
@@ -228,12 +234,19 @@ export class InvoiceFormComponent {
     { field: 'net', headerName: 'Net', editable: false, minWidth: 120, type: 'rightAligned' },
     { field: 'vat', headerName: 'KDV', editable: false, minWidth: 120, type: 'rightAligned' },
     { field: 'gross', headerName: 'Toplam', editable: false, minWidth: 130, type: 'rightAligned' },
-
     {
-      headerName: '', colId: 'actions', width: 70, pinned: 'right',
-      suppressHeaderMenuButton: true, sortable: false, filter: false,
-      cellRenderer: () => this.readonly() ? '' : `<button class="del-btn" title="Satırı Sil">🗑️</button>`
+    headerName: '',
+    colId: 'actions',
+    width: 64,
+    pinned: 'right',
+    suppressHeaderMenuButton: true,
+    sortable: false,
+    filter: false,
+    cellRenderer: LineActionsCell,
+    cellRendererParams: {
+      onDelete: this.deleteLine.bind(this) // Material buton tıklanınca bu fonksiyon çalışır
     }
+  }
   ];
 
   defaultColDef: ColDef = {
@@ -242,15 +255,19 @@ export class InvoiceFormComponent {
   };
 
   onCellClicked(e: CellClickedEvent<LineRow>) {
-    if (e.colDef.colId === 'actions' && !this.readonly()) {
-      const target = e.event?.target as HTMLElement | null;
-      if (target && (target as HTMLElement).closest('.del-btn')) {
-        const id = e.data!.id;
-        const cid = e.data!._cid;
-        this.rowData = this.rowData.filter(r => (r.id && r.id > 0) ? r.id !== id : r._cid !== cid);
-      }
-    }
+  const target = e.event?.target as HTMLElement | null;
+
+  // del butonu ise: submit + bubbling engelle
+  if (e.colDef.colId === 'actions' && target && target.closest('.del-btn')) {
+    e.event?.preventDefault();
+    e.event?.stopPropagation();
+
+    if (this.readonly()) return;
+
+    const { id, _cid } = e.data!;
+    this.rowData = this.rowData.filter(r => (r.id && r.id > 0) ? r.id !== id : r._cid !== _cid);
   }
+}
 
   addLine() {
     if (this.readonly()) return;
