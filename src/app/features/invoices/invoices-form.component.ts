@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators, FormArray, FormControl, FormGroup } from '@angular/forms';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule }      from '@angular/material/input';
-import { MatSelectModule }     from '@angular/material/select';
-import { MatButtonModule }     from '@angular/material/button';
-import { MatIconModule }       from '@angular/material/icon';
-import { MatDividerModule }    from '@angular/material/divider';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
 
 import { AgGridAngular } from 'ag-grid-angular';
 import type {
@@ -16,7 +16,7 @@ import type {
 import { LineActionsCell } from './line-actions.cell';
 
 export type InvoiceMode = 'insert' | 'update' | 'view';
-export type InvoiceTypeStr = 'Sales'|'Purchase'|'SalesReturn'|'PurchaseReturn';
+export type InvoiceTypeStr = 'Sales' | 'Purchase' | 'SalesReturn' | 'PurchaseReturn';
 
 export interface EditLine {
   id?: number;
@@ -35,17 +35,17 @@ export interface InvoiceFormValue {
   contactId: number | null;
   dateUtc: string;
   currency: string;
-  type: InvoiceTypeStr;
+  type: InvoiceTypeStr | number;
   lines: EditLine[];
 }
 
 /* ---- Tipli ana form (sadece header) ---- */
 type InvoiceFormGroup = FormGroup<{
   rowVersionBase64: FormControl<string>;
-  contactId:        FormControl<number | null>;
-  dateUtc:          FormControl<string>;
-  currency:         FormControl<string>;
-  type:             FormControl<InvoiceTypeStr>;
+  contactId: FormControl<number | null>;
+  dateUtc: FormControl<string>;
+  currency: FormControl<string>;
+  type: FormControl<InvoiceTypeStr>;
   // Satırları formda değil grid’de tutuyoruz; save’de map’liyoruz
 }>;
 
@@ -173,9 +173,11 @@ export class InvoiceFormComponent {
     this.form.patchValue({
       rowVersionBase64: v.rowVersionBase64 ?? '',
       contactId: v.contactId ?? null,
-      dateUtc: v.dateUtc ?? new Date().toISOString(),
+      // ⬇️ datetime-local uyumlu yerel string
+      dateUtc: this.toLocalInputValue(v.dateUtc),
       currency: v.currency ?? 'TRY',
-      type: (v.type ?? 'Sales') as InvoiceTypeStr
+      // ⬇️ sayı/string → enum adı
+      type: this.normalizeType(v.type)
     }, { emitEvent: false });
 
     // lines → grid rows
@@ -193,16 +195,16 @@ export class InvoiceFormComponent {
     }));
   }
 
-  @Output() saveInsert = new EventEmitter<Omit<InvoiceFormValue,'rowVersionBase64'|'id'>>();
+  @Output() saveInsert = new EventEmitter<Omit<InvoiceFormValue, 'rowVersionBase64' | 'id'>>();
   @Output() saveUpdate = new EventEmitter<InvoiceFormValue>();
 
   private fb = inject(FormBuilder);
   form: InvoiceFormGroup = this.fb.group({
     rowVersionBase64: this.fb.nonNullable.control<string>(''),
-    contactId:        this.fb.control<number | null>(null, { validators: [Validators.required] }),
-    dateUtc:          this.fb.nonNullable.control<string>(new Date().toISOString(), { validators: [Validators.required] }),
-    currency:         this.fb.nonNullable.control<string>('TRY', { validators: [Validators.required] }),
-    type:             this.fb.nonNullable.control<InvoiceTypeStr>('Sales', { validators: [Validators.required] })
+    contactId: this.fb.control<number | null>(null, { validators: [Validators.required] }),
+    dateUtc: this.fb.nonNullable.control<string>(new Date().toISOString(), { validators: [Validators.required] }),
+    currency: this.fb.nonNullable.control<string>('TRY', { validators: [Validators.required] }),
+    type: this.fb.nonNullable.control<InvoiceTypeStr>('Sales', { validators: [Validators.required] })
   });
 
   readonly = computed(() => this.mode === 'view');
@@ -235,18 +237,18 @@ export class InvoiceFormComponent {
     { field: 'vat', headerName: 'KDV', editable: false, minWidth: 120, type: 'rightAligned' },
     { field: 'gross', headerName: 'Toplam', editable: false, minWidth: 130, type: 'rightAligned' },
     {
-    headerName: '',
-    colId: 'actions',
-    width: 64,
-    pinned: 'right',
-    suppressHeaderMenuButton: true,
-    sortable: false,
-    filter: false,
-    cellRenderer: LineActionsCell,
-    cellRendererParams: {
-      onDelete: this.deleteLine.bind(this) // Material buton tıklanınca bu fonksiyon çalışır
+      headerName: '',
+      colId: 'actions',
+      width: 64,
+      pinned: 'right',
+      suppressHeaderMenuButton: true,
+      sortable: false,
+      filter: false,
+      cellRenderer: LineActionsCell,
+      cellRendererParams: {
+        onDelete: this.deleteLine.bind(this) // Material buton tıklanınca bu fonksiyon çalışır
+      }
     }
-  }
   ];
 
   defaultColDef: ColDef = {
@@ -255,19 +257,19 @@ export class InvoiceFormComponent {
   };
 
   onCellClicked(e: CellClickedEvent<LineRow>) {
-  const target = e.event?.target as HTMLElement | null;
+    const target = e.event?.target as HTMLElement | null;
 
-  // del butonu ise: submit + bubbling engelle
-  if (e.colDef.colId === 'actions' && target && target.closest('.del-btn')) {
-    e.event?.preventDefault();
-    e.event?.stopPropagation();
+    // del butonu ise: submit + bubbling engelle
+    if (e.colDef.colId === 'actions' && target && target.closest('.del-btn')) {
+      e.event?.preventDefault();
+      e.event?.stopPropagation();
 
-    if (this.readonly()) return;
+      if (this.readonly()) return;
 
-    const { id, _cid } = e.data!;
-    this.rowData = this.rowData.filter(r => (r.id && r.id > 0) ? r.id !== id : r._cid !== _cid);
+      const { id, _cid } = e.data!;
+      this.rowData = this.rowData.filter(r => (r.id && r.id > 0) ? r.id !== id : r._cid !== _cid);
+    }
   }
-}
 
   addLine() {
     if (this.readonly()) return;
@@ -292,7 +294,7 @@ export class InvoiceFormComponent {
     if (this.mode === 'insert') {
       this.saveInsert.emit({
         contactId: h.contactId!,
-        dateUtc: h.dateUtc,
+        dateUtc: this.localToUtcIso(h.dateUtc),
         currency: h.currency,
         type: h.type,
         lines: bodyLines
@@ -302,11 +304,47 @@ export class InvoiceFormComponent {
         id: (this as any).id, // container (EditPage) set ediyor
         rowVersionBase64: h.rowVersionBase64,
         contactId: h.contactId!,
-        dateUtc: h.dateUtc,
+        dateUtc: this.localToUtcIso(h.dateUtc),
         currency: h.currency,
         type: h.type,
         lines: bodyLines
       });
     }
+  }
+
+  toLocalInputValue(isoUtc?: string): string {
+    // BE'den "2025-11-02T16:00:00Z" gelirse -> "2025-11-02T19:00"
+    const d = isoUtc ? new Date(isoUtc) : new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  }
+
+  localToUtcIso(localStr: string): string {
+    // "YYYY-MM-DDTHH:mm" (tz'siz yerel) -> UTC ISO "....Z"
+    return new Date(localStr).toISOString();
+  }
+
+  normalizeType(val: unknown): InvoiceTypeStr {
+    if (typeof val === 'number') {
+      switch (val) {
+        case 1: return 'Sales';
+        case 2: return 'Purchase';
+        case 3: return 'SalesReturn';
+        case 4: return 'PurchaseReturn';
+        default: return 'Sales';
+      }
+    }
+    if (typeof val === 'string') {
+      // "1"/"2" string gelirse:
+      const n = Number(val);
+      if (Number.isFinite(n)) return this.normalizeType(n);
+      // "Sales" vb. gelirse:
+      if (['Sales', 'Purchase', 'SalesReturn', 'PurchaseReturn'].includes(val)) return val as InvoiceTypeStr;
+    }
+    return 'Sales';
   }
 }
