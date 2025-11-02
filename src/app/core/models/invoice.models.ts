@@ -51,7 +51,7 @@ export interface InvoiceDto {
   totalVat: string;
   totalGross: string;
   lines: InvoiceLineDto[];
-  rowVersionBase64: string;
+  rowVersion: string;
   createdAtUtc: string;
   updatedAtUtc?: string | null;
 }

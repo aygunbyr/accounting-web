@@ -52,7 +52,7 @@ export class InvoicesEditPage {
       next: dto => {
         this.formValue = {
           id: dto.id,
-          rowVersionBase64: dto.rowVersionBase64,
+          rowVersionBase64: dto.rowVersion,
           contactId: dto.contactId,
           dateUtc: dto.dateUtc,
           currency: dto.currency,
@@ -97,7 +97,7 @@ export class InvoicesEditPage {
         // yeni rowVersion + snapshot ile formu tazele
         this.formValue = {
           id: dto.id,
-          rowVersionBase64: dto.rowVersionBase64,
+          rowVersionBase64: dto.rowVersion,
           contactId: dto.contactId,
           dateUtc: dto.dateUtc,
           currency: dto.currency,
