@@ -22,3 +22,57 @@ export interface ListInvoicesQuery {
   dateToUtc?: string;
   type?: string;                // satış/satınalma gibi enum ise string bırakıyoruz
 }
+
+export interface InvoiceLineDto {
+  id: number;
+  itemId: number;
+  itemCode: string;
+  itemName: string;
+  unit: string;
+  qty: string;       // "S3" string (BE böyle döndürüyor)
+  unitPrice: string; // "S4"
+  vatRate: number;
+  net: string;
+  vat: string;
+  gross: string;
+}
+
+export type InvoiceTypeStr = 'Sales' | 'Purchase' | 'SalesReturn' | 'PurchaseReturn';
+
+export interface InvoiceDto {
+  id: number;
+  contactId: number;
+  contactCode?: string;
+  contactName?: string;
+  dateUtc: string;
+  currency: string;
+  type: InvoiceTypeStr;
+  totalNet: string;
+  totalVat: string;
+  totalGross: string;
+  lines: InvoiceLineDto[];
+  rowVersionBase64: string;
+  createdAtUtc: string;
+  updatedAtUtc?: string | null;
+}
+
+export interface CreateInvoiceBody {
+  contactId: number;
+  dateUtc: string;
+  currency: string;
+  type: InvoiceTypeStr;
+  lines: Array<{ id?: 0; itemId: number; qty: number; unitPrice: number; vatRate: number }>;
+}
+
+export interface CreateInvoiceResult { id: number; rowVersionBase64: string; }
+
+export interface UpdateInvoiceBody {
+  id: number;
+  rowVersionBase64: string;
+  contactId: number;
+  dateUtc: string;
+  currency: string;
+  type: InvoiceTypeStr;
+  lines: Array<{ id: number; itemId: number; qty: number; unitPrice: number; vatRate: number }>;
+}
+
