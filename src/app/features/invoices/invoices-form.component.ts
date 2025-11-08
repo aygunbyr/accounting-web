@@ -13,10 +13,15 @@ import { AgGridAngular } from 'ag-grid-angular';
 import type {
   ColDef, GetRowIdParams, ValueParserParams, CellClickedEvent
 } from 'ag-grid-community';
+
+import Decimal from 'decimal.js';
+
 import { LineActionsCell } from './line-actions.cell';
 
 export type InvoiceMode = 'insert' | 'update' | 'view';
 export type InvoiceTypeStr = 'Sales' | 'Purchase' | 'SalesReturn' | 'PurchaseReturn';
+
+Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_UP }); // BE'de MidpointRounding.AwayFromZero eşdeğeri
 
 export interface EditLine {
   id?: number;
@@ -233,9 +238,30 @@ export class InvoiceFormComponent {
     { field: 'vatRate', headerName: 'KDV (%)', editable: p => !this.readonly(), valueParser: this.numberParser, minWidth: 110, type: 'rightAligned' },
 
     // Salt-okunur gösterimler (BE hesaplar)
-    { field: 'net', headerName: 'Net', editable: false, minWidth: 120, type: 'rightAligned' },
-    { field: 'vat', headerName: 'KDV', editable: false, minWidth: 120, type: 'rightAligned' },
-    { field: 'gross', headerName: 'Toplam', editable: false, minWidth: 130, type: 'rightAligned' },
+    // { field: 'net', headerName: 'Net', editable: false, minWidth: 120, type: 'rightAligned' },
+    // { field: 'vat', headerName: 'KDV', editable: false, minWidth: 120, type: 'rightAligned' },
+    // { field: 'gross', headerName: 'Toplam', editable: false, minWidth: 130, type: 'rightAligned' },
+    {
+      headerName: 'Net',
+      editable: false,
+      minWidth: 120,
+      type: 'rightAligned',
+      valueGetter: (p) => this.preview(p.data).net
+    },
+    {
+      headerName: 'KDV Tutarı',
+      editable: false,
+      minWidth: 120,
+      type: 'rightAligned',
+      valueGetter: (p) => this.preview(p.data).vat
+    },
+    {
+      headerName: 'Brüt',
+      editable: false,
+      minWidth: 130,
+      type: 'rightAligned',
+      valueGetter: (p) => this.preview(p.data).gross
+    },
     {
       headerName: '',
       colId: 'actions',
@@ -278,6 +304,7 @@ export class InvoiceFormComponent {
       ...this.rowData
     ];
   }
+
 
   onSave() {
     if (this.readonly()) return;
@@ -347,4 +374,32 @@ export class InvoiceFormComponent {
     }
     return 'Sales';
   }
+
+  private preview(row?: { qty?: number | string | null; unitPrice?: number | string | null; vatRate?: number | string | null }) {
+  // "1,23" gibi girişler için noktalı normalize
+  const norm = (v: unknown) => {
+    if (v === null || v === undefined) return "0";
+    return String(v).replace(",", ".").trim() || "0";
+  };
+
+  const qty = new Decimal(norm(row?.qty));
+  const unitPrice = new Decimal(norm(row?.unitPrice));
+  const rate = new Decimal(norm(row?.vatRate));
+
+  // NET = Birim Fiyat × Adet
+  const net = unitPrice.times(qty);
+
+  // KDV = NET × (rate / 100)
+  const vat = net.times(rate).div(100);
+
+  // BRÜT = NET + KDV
+  const gross = net.plus(vat);
+
+  return {
+    net: net.toFixed(2),
+    vat: vat.toFixed(2),
+    gross: gross.toFixed(2),
+  };
+}
+
 }
