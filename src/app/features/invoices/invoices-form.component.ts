@@ -246,21 +246,21 @@ export class InvoiceFormComponent {
       editable: false,
       minWidth: 120,
       type: 'rightAligned',
-      valueGetter: (p) => this.preview(p.data).net
+      valueGetter: (p) => this.readonly() ? (p.data?.net ?? '') : this.preview(p.data).net
     },
     {
       headerName: 'KDV Tutarı',
       editable: false,
       minWidth: 120,
       type: 'rightAligned',
-      valueGetter: (p) => this.preview(p.data).vat
+      valueGetter: (p) => this.readonly() ? (p.data?.vat ?? '') : this.preview(p.data).vat
     },
     {
       headerName: 'Brüt',
       editable: false,
       minWidth: 130,
       type: 'rightAligned',
-      valueGetter: (p) => this.preview(p.data).gross
+      valueGetter: (p) => this.readonly() ? (p.data?.gross ?? '') : this.preview(p.data).gross
     },
     {
       headerName: '',
