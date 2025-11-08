@@ -40,3 +40,20 @@ body {
 .grid-host { height: 80vh; width: 100%; }
 ag-grid-angular { display: block; height: 100%; width: 100%; }
 /* Son: AG Grid teması */
+
+/* Angular Material Kompaktlık Ayarları */
+
+// 1) Kompaktlık seviyeni tanımla: 0 (varsayılan), -1, -2, -3 (en kompakt)
+html {
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: -2, // ⬅️ 0 yerine -1/-2/-3 (en kompakt)
+  ));
+}
+
+
+/* Son: Angular Material Kompaktlık Ayarları */
