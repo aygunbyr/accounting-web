@@ -6,14 +6,15 @@ import { InvoicesService } from '../../core/services/invoices.service';
 import { InvoiceListItem } from '../../core/models/invoice.models';
 import { MatIconModule } from '@angular/material/icon';
 import { InvoiceActionsCell } from './invoice-actions.cell';
+import { MatButtonModule } from '@angular/material/button';
+import { RouterModule } from '@angular/router';
 
 @Component({
   standalone: true,
   selector: 'app-invoices-page',
-  imports: [CommonModule, MatIconModule, ListGridComponent],
+  imports: [CommonModule, MatIconModule, MatButtonModule, RouterModule, ListGridComponent],
   template: `
     <div class="toolbar">
-      <span class="title">Faturalar</span>
       <span class="spacer"></span>
       <a mat-stroked-button color="primary" routerLink="/invoices/new">
         <mat-icon>add</mat-icon>
