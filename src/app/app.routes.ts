@@ -5,6 +5,7 @@ export const routes: Routes = [
 
   { path: 'payments', loadComponent: () => import('./features/payments/payments-page.component').then(m => m.PaymentsPageComponent) },
   { path: 'items',    loadComponent: () => import('./features/items/items-page.component').then(m => m.ItemsPageComponent) },
+  { path: 'fixed-assets', loadComponent: () => import('./features/fixed-assets/fixed-assets-page.component').then(m => m.FixedAssetsPageComponent) },
 
   // ---- Invoices (özeller önce) ----
   { path: 'invoices/new',        loadComponent: () => import('./features/invoices/invoice-edit.page').then(m => m.InvoicesEditPage) }, // INSERT
