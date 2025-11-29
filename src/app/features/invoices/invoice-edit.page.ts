@@ -35,6 +35,7 @@ export class InvoicesEditPage {
     if (!idParam) {
       this.mode = 'insert';
       this.formValue = {
+        branchId: null,                                          // NEW (elle gireceksin)
         contactId: null,
         dateUtc: new Date().toISOString(),
         currency: 'TRY',
@@ -53,6 +54,7 @@ export class InvoicesEditPage {
         this.formValue = {
           id: dto.id,
           rowVersionBase64: dto.rowVersion,
+          branchId: dto.branchId,                                // NEW
           contactId: dto.contactId,
           dateUtc: dto.dateUtc,
           currency: dto.currency,
@@ -79,6 +81,7 @@ export class InvoicesEditPage {
   }
 
   handleInsert(body: any) {
+    // body branchId'yi already içeriyor (formdan geliyor)
     this.svc.create(body).subscribe({
       next: res => {
         this.snack.open('Fatura oluşturuldu.', 'Kapat', { duration: 2000 });
@@ -98,6 +101,7 @@ export class InvoicesEditPage {
         this.formValue = {
           id: dto.id,
           rowVersionBase64: dto.rowVersion,
+          branchId: dto.branchId,                                // NEW
           contactId: dto.contactId,
           dateUtc: dto.dateUtc,
           currency: dto.currency,

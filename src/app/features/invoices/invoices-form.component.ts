@@ -34,9 +34,11 @@ export interface EditLine {
   vatRate: number | null;
   net?: string | null; vat?: string | null; gross?: string | null;
 }
+
 export interface InvoiceFormValue {
   id?: number;
   rowVersionBase64?: string;
+  branchId?: number | null;                          // NEW
   contactId: number | null;
   dateUtc: string;
   currency: string;
@@ -47,6 +49,7 @@ export interface InvoiceFormValue {
 /* ---- Tipli ana form (sadece header) ---- */
 type InvoiceFormGroup = FormGroup<{
   rowVersionBase64: FormControl<string>;
+  branchId: FormControl<number | null>;             // NEW
   contactId: FormControl<number | null>;
   dateUtc: FormControl<string>;
   currency: FormControl<string>;
@@ -92,6 +95,16 @@ type LineRow = {
 
     <!-- HEADER -->
     <div class="form-grid">
+      <!-- NEW: BranchId textbox -->
+      <mat-form-field appearance="outline">                                   <!-- NEW -->
+        <mat-label>Şube (ID)</mat-label>                                      <!-- NEW -->
+        <input                                                                
+          matInput                                                            
+          type="number"                                                       
+          formControlName="branchId"                                          
+          [readonly]="readonly()">                                            <!-- NEW -->
+      </mat-form-field>                                                       <!-- NEW -->
+
       <mat-form-field appearance="outline">
         <mat-label>Cari (ID)</mat-label>
         <input matInput type="number" formControlName="contactId" [readonly]="readonly()">
@@ -177,6 +190,7 @@ export class InvoiceFormComponent {
     // header
     this.form.patchValue({
       rowVersionBase64: v.rowVersionBase64 ?? '',
+      branchId: v.branchId ?? null,                          // NEW
       contactId: v.contactId ?? null,
       // ⬇️ datetime-local uyumlu yerel string
       dateUtc: this.toLocalInputValue(v.dateUtc),
@@ -206,6 +220,7 @@ export class InvoiceFormComponent {
   private fb = inject(FormBuilder);
   form: InvoiceFormGroup = this.fb.group({
     rowVersionBase64: this.fb.nonNullable.control<string>(''),
+    branchId: this.fb.control<number | null>(null, { validators: [Validators.required] }),  // NEW
     contactId: this.fb.control<number | null>(null, { validators: [Validators.required] }),
     dateUtc: this.fb.nonNullable.control<string>(new Date().toISOString(), { validators: [Validators.required] }),
     currency: this.fb.nonNullable.control<string>('TRY', { validators: [Validators.required] }),
@@ -237,10 +252,6 @@ export class InvoiceFormComponent {
     { field: 'unitPrice', headerName: 'Birim Fiyat', editable: p => !this.readonly(), valueParser: this.numberParser, minWidth: 130, type: 'rightAligned' },
     { field: 'vatRate', headerName: 'KDV (%)', editable: p => !this.readonly(), valueParser: this.numberParser, minWidth: 110, type: 'rightAligned' },
 
-    // Salt-okunur gösterimler (BE hesaplar)
-    // { field: 'net', headerName: 'Net', editable: false, minWidth: 120, type: 'rightAligned' },
-    // { field: 'vat', headerName: 'KDV', editable: false, minWidth: 120, type: 'rightAligned' },
-    // { field: 'gross', headerName: 'Toplam', editable: false, minWidth: 130, type: 'rightAligned' },
     {
       headerName: 'Net',
       editable: false,
@@ -305,7 +316,6 @@ export class InvoiceFormComponent {
     ];
   }
 
-
   onSave() {
     if (this.readonly()) return;
     const h = this.form.getRawValue();
@@ -320,6 +330,7 @@ export class InvoiceFormComponent {
 
     if (this.mode === 'insert') {
       this.saveInsert.emit({
+        branchId: h.branchId!,                              // NEW
         contactId: h.contactId!,
         dateUtc: this.localToUtcIso(h.dateUtc),
         currency: h.currency,
@@ -330,6 +341,7 @@ export class InvoiceFormComponent {
       this.saveUpdate.emit({
         id: (this as any).id, // container (EditPage) set ediyor
         rowVersionBase64: h.rowVersionBase64,
+        branchId: h.branchId!,                              // NEW
         contactId: h.contactId!,
         dateUtc: this.localToUtcIso(h.dateUtc),
         currency: h.currency,
@@ -376,30 +388,29 @@ export class InvoiceFormComponent {
   }
 
   private preview(row?: { qty?: number | string | null; unitPrice?: number | string | null; vatRate?: number | string | null }) {
-  // "1,23" gibi girişler için noktalı normalize
-  const norm = (v: unknown) => {
-    if (v === null || v === undefined) return "0";
-    return String(v).replace(",", ".").trim() || "0";
-  };
+    // "1,23" gibi girişler için noktalı normalize
+    const norm = (v: unknown) => {
+      if (v === null || v === undefined) return "0";
+      return String(v).replace(",", ".").trim() || "0";
+    };
 
-  const qty = new Decimal(norm(row?.qty));
-  const unitPrice = new Decimal(norm(row?.unitPrice));
-  const rate = new Decimal(norm(row?.vatRate));
+    const qty = new Decimal(norm(row?.qty));
+    const unitPrice = new Decimal(norm(row?.unitPrice));
+    const rate = new Decimal(norm(row?.vatRate));
 
-  // NET = Birim Fiyat × Adet
-  const net = unitPrice.times(qty);
+    // NET = Birim Fiyat × Adet
+    const net = unitPrice.times(qty);
 
-  // KDV = NET × (rate / 100)
-  const vat = net.times(rate).div(100);
+    // KDV = NET = (rate / 100)
+    const vat = net.times(rate).div(100);
 
-  // BRÜT = NET + KDV
-  const gross = net.plus(vat);
+    // BRÜT = NET + KDV
+    const gross = net.plus(vat);
 
-  return {
-    net: net.toFixed(2),
-    vat: vat.toFixed(2),
-    gross: gross.toFixed(2),
-  };
-}
-
+    return {
+      net: net.toFixed(2),
+      vat: vat.toFixed(2),
+      gross: gross.toFixed(2),
+    };
+  }
 }

@@ -10,6 +10,9 @@ export interface InvoiceListItem {
   totalGross: string;
   contactId?: number | null;
   createdAtUtc: string;
+  branchId: number;
+  branchCode: string;
+  branchName: string;
 }
 
 export interface ListInvoicesQuery {
@@ -20,7 +23,8 @@ export interface ListInvoicesQuery {
   currency?: string;
   dateFromUtc?: string;
   dateToUtc?: string;
-  type?: string;                // satış/satınalma gibi enum ise string bırakıyoruz
+  type?: string;                // satış/satınalma gibi
+  branchId?: number | null;
 }
 
 export interface InvoiceLineDto {
@@ -54,9 +58,13 @@ export interface InvoiceDto {
   rowVersion: string;
   createdAtUtc: string;
   updatedAtUtc?: string | null;
+  branchId: number;
+  branchCode: string;
+  branchName: string;
 }
 
 export interface CreateInvoiceBody {
+  branchId: number;
   contactId: number;
   dateUtc: string;
   currency: string;
@@ -69,6 +77,7 @@ export interface CreateInvoiceResult { id: number; rowVersionBase64: string; }
 export interface UpdateInvoiceBody {
   id: number;
   rowVersionBase64: string;
+  branchId: number;
   contactId: number;
   dateUtc: string;
   currency: string;

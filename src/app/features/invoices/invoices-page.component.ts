@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ColDef } from 'ag-grid-community';
 import { ListGridComponent } from '../../shared/list-grid/list-grid.component';
@@ -8,12 +8,42 @@ import { MatIconModule } from '@angular/material/icon';
 import { InvoiceActionsCell } from './invoice-actions.cell';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
   standalone: true,
   selector: 'app-invoices-page',
-  imports: [CommonModule, MatIconModule, MatButtonModule, RouterModule, ListGridComponent],
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatButtonModule,
+    RouterModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    ListGridComponent
+  ],
   template: `
+    
+
+    <span class="title">Filtreler</span>
+    <!-- Şube filtresi (Id) -->
+    <div class="filters">
+      <mat-form-field appearance="outline">
+        <mat-label>Şube Id</mat-label>
+        <input
+          matInput
+          type="number"
+          [(ngModel)]="branchId"
+          placeholder="Boş bırak: tüm şubeler" />
+      </mat-form-field>
+
+      <button mat-stroked-button (click)="apply()">Uygula</button>
+      <button mat-button (click)="reset()">Sıfırla</button>
+    </div>
+
     <div class="toolbar">
       <span class="spacer"></span>
       <a mat-stroked-button color="primary" routerLink="/invoices/new">
@@ -23,6 +53,7 @@ import { RouterModule } from '@angular/router';
     </div>
 
     <app-list-grid
+      #grid
       title="Faturalar"
       [columns]="colDefs"
       [sortWhitelist]="sortWhitelist"
@@ -30,9 +61,10 @@ import { RouterModule } from '@angular/router';
     </app-list-grid>
   `,
   styles: [`
-    .toolbar{display:flex;align-items:center;margin-bottom:8px}
-    .title{font-weight:600}
-    .spacer{flex:1}
+    .toolbar { display:flex; align-items:center; padding:8px 0; }
+    .title { font-weight:600; }
+    .spacer { flex:1; }
+    .filters { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
     :host ::ng-deep .icon-btn{
       display:inline-flex;align-items:center;justify-content:center;
       width:32px;height:32px;border-radius:6px;text-decoration:none;
@@ -42,33 +74,55 @@ import { RouterModule } from '@angular/router';
   `]
 })
 export class InvoicesPageComponent {
-  sortWhitelist = ['dateUtc','totalNet','totalVat','totalGross'];
+  sortWhitelist = ['dateUtc', 'totalNet', 'totalVat', 'totalGross'];
+  branchId: number | null = null;
 
   colDefs: ColDef<InvoiceListItem>[] = [
     { field: 'dateUtc', headerName: 'Tarih (UTC)', sortable: true, valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString() : '' },
-    { field: 'contactCode', headerName: 'Cari Kodu', sortable: false, minWidth: 120 },
-    { field: 'contactName', headerName: 'Cari Adı',  sortable: false, minWidth: 180 },
+    { field: 'branchId', headerName: 'Şube Id', sortable: false, minWidth: 80 },
+    { field: 'branchCode', headerName: 'Şube Kodu', sortable: false, minWidth: 80 },
+    { field: 'branchName', headerName: 'Şube Adı',  sortable: false, minWidth: 120 },
+    { field: 'contactCode', headerName: 'Cari Kodu', sortable: false, minWidth: 80 },
+    { field: 'contactName', headerName: 'Cari Adı', sortable: false, minWidth: 180 },
     { field: 'type', headerName: 'Tür', sortable: false, maxWidth: 120 }, // Sales/Purchase    
-    { field: 'currency', headerName: 'PB', sortable: false, maxWidth: 100 },
+    { field: 'currency', headerName: 'Para Brm', sortable: false, maxWidth: 100 },
     { field: 'totalNet', headerName: 'Net', sortable: true, type: 'rightAligned', minWidth: 120 },
     { field: 'totalVat', headerName: 'KDV', sortable: true, type: 'rightAligned', minWidth: 120 },
     { field: 'totalGross', headerName: 'Genel Toplam', sortable: true, type: 'rightAligned', minWidth: 140 },
     // 🔽 Aksiyonlar
     {
-    headerName: '',
-    field: 'id',
-    width: 110,
-    pinned: 'right',
-    sortable: false,
-    filter: false,
-    suppressHeaderMenuButton: true,   // ✅ v34
-    cellRenderer: InvoiceActionsCell   // (Angular renderer’ı kullanıyoruz)
-  }
+      headerName: '',
+      field: 'id',
+      width: 110,
+      pinned: 'right',
+      sortable: false,
+      filter: false,
+      suppressHeaderMenuButton: true,   // ✅ v34
+      cellRenderer: InvoiceActionsCell   // (Angular renderer’ı kullanıyoruz)
+    }
   ];
 
-  constructor(private service: InvoicesService) {}
+  @ViewChild('grid') grid!: ListGridComponent<InvoiceListItem>;
+
+  constructor(private service: InvoicesService) { }
 
   // fetcher fonksiyonu Input olarak veriyoruz
-  fetcher = (q: { pageNumber?: number; pageSize?: number; sort?: string; }) =>
-    this.service.list(q);
+  fetcher = (q: { pageNumber?: number; pageSize?: number; sort?: string; }) => {
+    const query = {
+      ...q,
+      branchId: this.branchId ?? undefined
+    };
+    return this.service.list(query);
+  }
+
+  apply() {
+    this.grid.reload();
+  }
+
+  reset() {
+    this.branchId = null;
+    this.grid.reload();
+  }
+    
+  
 }
