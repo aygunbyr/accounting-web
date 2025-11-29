@@ -29,8 +29,8 @@ export interface EditLine {
   itemCode?: string | null;
   itemName?: string | null;
   unit?: string | null;
-  qty: number | null;
-  unitPrice: number | null;
+  qty: string | null;
+  unitPrice: string | null;
   vatRate: number | null;
   net?: string | null; vat?: string | null; gross?: string | null;
 }
@@ -61,8 +61,8 @@ type LineRow = {
   id: number;            // 0 = yeni
   _cid?: string;         // client-temp id (rowId için)
   itemId: number | null;
-  qty: number | null;
-  unitPrice: number | null;
+  qty: string | null;        // ⬅️ number yerine string
+  unitPrice: string | null;  // ⬅️ number yerine string
   vatRate: number | null;
   net?: string | null;
   vat?: string | null;
@@ -233,11 +233,13 @@ export class InvoiceFormComponent {
   rowData: LineRow[] = [];
   private _cidSeq = 1;
 
-  numberParser = (p: ValueParserParams) => {
-    if (p.newValue === null || p.newValue === undefined || p.newValue === '') return null;
-    const n = Number(String(p.newValue).replace(',', '.'));
-    return Number.isFinite(n) ? n : null;
+  stringNumberParser = (p: ValueParserParams) => {
+    if (p.newValue === null || p.newValue === undefined) return null;
+    const s = String(p.newValue).replace(',', '.').trim();
+    return s === '' ? null : s;   // ⬅️ hep string döndürüyoruz
   };
+
+
 
   getRowId = (p: GetRowIdParams<LineRow>) => String(p.data?.id && p.data.id > 0 ? p.data.id : p.data?._cid);
 
@@ -247,10 +249,10 @@ export class InvoiceFormComponent {
   };
 
   colDefs: ColDef<LineRow>[] = [
-    { field: 'itemId', headerName: 'Ürün (ID)', editable: p => !this.readonly(), valueParser: this.numberParser, minWidth: 120 },
-    { field: 'qty', headerName: 'Miktar', editable: p => !this.readonly(), valueParser: this.numberParser, minWidth: 110, type: 'rightAligned' },
-    { field: 'unitPrice', headerName: 'Birim Fiyat', editable: p => !this.readonly(), valueParser: this.numberParser, minWidth: 130, type: 'rightAligned' },
-    { field: 'vatRate', headerName: 'KDV (%)', editable: p => !this.readonly(), valueParser: this.numberParser, minWidth: 110, type: 'rightAligned' },
+    { field: 'itemId', headerName: 'Ürün (ID)', editable: p => !this.readonly(), minWidth: 120 },
+    { field: 'qty', headerName: 'Miktar', editable: p => !this.readonly(), valueParser: this.stringNumberParser, minWidth: 110, type: 'rightAligned' },
+    { field: 'unitPrice', headerName: 'Birim Fiyat', editable: p => !this.readonly(), valueParser: this.stringNumberParser, minWidth: 130, type: 'rightAligned' },
+    { field: 'vatRate', headerName: 'KDV (%)', editable: p => !this.readonly(), minWidth: 110, type: 'rightAligned' },
 
     {
       headerName: 'Net',
@@ -311,7 +313,7 @@ export class InvoiceFormComponent {
   addLine() {
     if (this.readonly()) return;
     this.rowData = [
-      { id: 0, _cid: `c${this._cidSeq++}`, itemId: null, qty: 1, unitPrice: 0, vatRate: 20, net: null, vat: null, gross: null },
+      { id: 0, _cid: `c${this._cidSeq++}`, itemId: null, qty: '1', unitPrice: '0', vatRate: 20, net: null, vat: null, gross: null },
       ...this.rowData
     ];
   }
@@ -323,21 +325,42 @@ export class InvoiceFormComponent {
     const bodyLines = this.rowData.map(l => ({
       id: l.id ?? 0,
       itemId: l.itemId!,
-      qty: Number(l.qty ?? 0),
-      unitPrice: Number(l.unitPrice ?? 0),
+      qty: l.qty ?? '0',
+      unitPrice: l.unitPrice ?? '0',
       vatRate: Number(l.vatRate ?? 0)
     }));
 
     if (this.mode === 'insert') {
-      this.saveInsert.emit({
-        branchId: h.branchId!,                              // NEW
-        contactId: h.contactId!,
-        dateUtc: this.localToUtcIso(h.dateUtc),
-        currency: h.currency,
-        type: h.type,
-        lines: bodyLines
-      });
-    } else {
+  const createLines = this.rowData.map(l => {
+    const rawQty = l.qty ?? '0';
+    const rawUnitPrice = l.unitPrice ?? '0';
+
+    // normalize: virgül → nokta, boşsa "0"
+    const normQty = (rawQty || '0').replace(',', '.').trim();
+    const normUnitPrice = (rawUnitPrice || '0').replace(',', '.').trim();
+
+    // Decimal ile IEEE-754 olmadan precision uygula
+    const qtyStr = new Decimal(normQty || '0').toFixed(3);      // S3
+    const unitPriceStr = new Decimal(normUnitPrice || '0').toFixed(4); // S4
+
+    return {
+      id: 0,
+      itemId: l.itemId!,
+      qty: qtyStr,             // ⬅️ string
+      unitPrice: unitPriceStr, // ⬅️ string
+      vatRate: Number(l.vatRate ?? 0)
+    };
+  });
+
+  this.saveInsert.emit({
+    branchId: h.branchId!,
+    contactId: h.contactId!,
+    dateUtc: this.localToUtcIso(h.dateUtc),
+    currency: h.currency,
+    type: h.type,
+    lines: createLines as any
+  } as any);
+} else {
       this.saveUpdate.emit({
         id: (this as any).id, // container (EditPage) set ediyor
         rowVersionBase64: h.rowVersionBase64,

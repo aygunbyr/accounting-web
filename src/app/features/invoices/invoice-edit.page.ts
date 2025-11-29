@@ -65,8 +65,8 @@ export class InvoicesEditPage {
             itemCode: l.itemCode,
             itemName: l.itemName,
             unit: l.unit,
-            qty: Number(l.qty),            // S3 -> number (UI için)
-            unitPrice: Number(l.unitPrice),// S4 -> number
+            qty: l.qty,
+            unitPrice: l.unitPrice,
             vatRate: l.vatRate,
             net: l.net, vat: l.vat, gross: l.gross
           }))
@@ -108,7 +108,7 @@ export class InvoicesEditPage {
           type: dto.type as any,
           lines: dto.lines.map(l => ({
             id: l.id, itemId: l.itemId, itemCode: l.itemCode, itemName: l.itemName, unit: l.unit,
-            qty: Number(l.qty), unitPrice: Number(l.unitPrice), vatRate: l.vatRate,
+            qty: l.qty, unitPrice: l.unitPrice, vatRate: l.vatRate,
             net: l.net, vat: l.vat, gross: l.gross
           }))
         };
