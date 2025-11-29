@@ -322,6 +322,11 @@ export class InvoiceFormComponent {
     if (this.readonly()) return;
     const h = this.form.getRawValue();
 
+    const normalize = (v: string | null | undefined): string => {
+      const s = (v ?? '0').toString().replace(',', '.').trim();
+      return s === '' ? '0' : s;
+    };
+
     const bodyLines = this.rowData.map(l => ({
       id: l.id ?? 0,
       itemId: l.itemId!,
@@ -331,36 +336,23 @@ export class InvoiceFormComponent {
     }));
 
     if (this.mode === 'insert') {
-  const createLines = this.rowData.map(l => {
-    const rawQty = l.qty ?? '0';
-    const rawUnitPrice = l.unitPrice ?? '0';
+      const createLines = this.rowData.map(l => ({
+        id: 0,
+        itemId: Number(l.itemId ?? 0),      // ItemId: int (BE dto da int)
+        qty: normalize(l.qty),              // ⬅️ string, BE decimal.TryParse
+        unitPrice: normalize(l.unitPrice),  // ⬅️ string, BE decimal.TryParse
+        vatRate: Number(l.vatRate ?? 0)
+      }));
 
-    // normalize: virgül → nokta, boşsa "0"
-    const normQty = (rawQty || '0').replace(',', '.').trim();
-    const normUnitPrice = (rawUnitPrice || '0').replace(',', '.').trim();
-
-    // Decimal ile IEEE-754 olmadan precision uygula
-    const qtyStr = new Decimal(normQty || '0').toFixed(3);      // S3
-    const unitPriceStr = new Decimal(normUnitPrice || '0').toFixed(4); // S4
-
-    return {
-      id: 0,
-      itemId: Number(l.itemId ?? 0),
-      qty: qtyStr,             // ⬅️ string
-      unitPrice: unitPriceStr, // ⬅️ string
-      vatRate: Number(l.vatRate ?? 0)
-    };
-  });
-
-  this.saveInsert.emit({
-    branchId: h.branchId!,
-    contactId: h.contactId!,
-    dateUtc: this.localToUtcIso(h.dateUtc),
-    currency: h.currency,
-    type: h.type,
-    lines: createLines as any
-  } as any);
-} else {
+      this.saveInsert.emit({
+        branchId: h.branchId!,
+        contactId: h.contactId!,
+        dateUtc: this.localToUtcIso(h.dateUtc),
+        currency: h.currency,
+        type: h.type,
+        lines: createLines as any
+      } as any);
+    } else {
       this.saveUpdate.emit({
         id: (this as any).id, // container (EditPage) set ediyor
         rowVersionBase64: h.rowVersionBase64,
