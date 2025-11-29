@@ -345,7 +345,7 @@ export class InvoiceFormComponent {
 
     return {
       id: 0,
-      itemId: l.itemId!,
+      itemId: Number(l.itemId ?? 0),
       qty: qtyStr,             // ⬅️ string
       unitPrice: unitPriceStr, // ⬅️ string
       vatRate: Number(l.vatRate ?? 0)
