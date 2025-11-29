@@ -11,6 +11,9 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { BranchDto } from '../../core/models/branch.models';
+import { BranchesService } from '../../core/services/branches.service';
 
 @Component({
   standalone: true,
@@ -23,28 +26,27 @@ import { MatInputModule } from '@angular/material/input';
     FormsModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     ListGridComponent
   ],
   template: `
-    
-
     <span class="title">Filtreler</span>
-    <!-- Şube filtresi (Id) -->
-    <div class="filters">
-      <mat-form-field appearance="outline">
-        <mat-label>Şube Id</mat-label>
-        <input
-          matInput
-          type="number"
-          [(ngModel)]="branchId"
-          placeholder="Boş bırak: tüm şubeler" />
+    
+    <div class="toolbar">
+      <div class="filters">
+      <mat-form-field appearance="outline" class="branch-field">
+        <mat-label>Şube</mat-label>
+        <mat-select [(ngModel)]="branchId">
+          <mat-option [value]="null">Tüm şubeler</mat-option>
+          <mat-option *ngFor="let b of branches" [value]="b.id">
+            {{ b.code }} - {{ b.name }}
+          </mat-option>
+        </mat-select>
       </mat-form-field>
 
       <button mat-stroked-button (click)="apply()">Uygula</button>
       <button mat-button (click)="reset()">Sıfırla</button>
     </div>
-
-    <div class="toolbar">
       <span class="spacer"></span>
       <a mat-stroked-button color="primary" routerLink="/invoices/new">
         <mat-icon>add</mat-icon>
@@ -71,17 +73,19 @@ import { MatInputModule } from '@angular/material/input';
       margin-left:4px;
     }
     :host ::ng-deep .icon-btn .material-icons{font-size:20px;line-height:20px}
+    .branch-field { min-width: 260px; }
   `]
 })
 export class InvoicesPageComponent {
   sortWhitelist = ['dateUtc', 'totalNet', 'totalVat', 'totalGross'];
   branchId: number | null = null;
+  branches: BranchDto[] = [];
 
   colDefs: ColDef<InvoiceListItem>[] = [
     { field: 'dateUtc', headerName: 'Tarih (UTC)', sortable: true, valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString() : '' },
     { field: 'branchId', headerName: 'Şube Id', sortable: false, minWidth: 80 },
     { field: 'branchCode', headerName: 'Şube Kodu', sortable: false, minWidth: 80 },
-    { field: 'branchName', headerName: 'Şube Adı',  sortable: false, minWidth: 120 },
+    { field: 'branchName', headerName: 'Şube Adı', sortable: false, minWidth: 120 },
     { field: 'contactCode', headerName: 'Cari Kodu', sortable: false, minWidth: 80 },
     { field: 'contactName', headerName: 'Cari Adı', sortable: false, minWidth: 180 },
     { field: 'type', headerName: 'Tür', sortable: false, maxWidth: 120 }, // Sales/Purchase    
@@ -104,7 +108,17 @@ export class InvoicesPageComponent {
 
   @ViewChild('grid') grid!: ListGridComponent<InvoiceListItem>;
 
-  constructor(private service: InvoicesService) { }
+  constructor(
+    private service: InvoicesService,
+    private branchesService: BranchesService,
+  ) {
+    this.branchesService.list().subscribe({
+      next: (res) => (this.branches = res),
+      error: () => {
+        this.branches = [];
+      }
+    });
+  }
 
   // fetcher fonksiyonu Input olarak veriyoruz
   fetcher = (q: { pageNumber?: number; pageSize?: number; sort?: string; }) => {
@@ -123,6 +137,6 @@ export class InvoicesPageComponent {
     this.branchId = null;
     this.grid.reload();
   }
-    
-  
+
+
 }
